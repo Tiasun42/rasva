@@ -41,7 +41,7 @@ jobs:
       - name: Set Local User Password
         run: |
           # Set password for the local user "runneradmin"
-          Set-LocalUser -Name "egianda" -Password (ConvertTo-SecureString -AsPlainText "P@ssw0rd!" -Force)
+          Set-LocalUser -Name "runneradmin" -Password (ConvertTo-SecureString -AsPlainText "P@ssw0rd!" -Force)
 
       - name: Create Ngrok Tunnel
         run: |
