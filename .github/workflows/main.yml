@@ -1,0 +1,49 @@
+name: Remote Desktop Workflow
+
+on:
+  push:
+    branches:
+      - main  # Adjust the branch as needed
+  workflow_dispatch:
+
+jobs:
+  build:
+    runs-on: windows-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v2
+
+      - name: Download Ngrok
+        run: |
+          Invoke-WebRequest -Uri "https://bin.equinox.io/c/4VmDzA7iaHb/ngrok-stable-windows-amd64.zip" -OutFile ngrok.zip
+
+      - name: Extract Ngrok
+        run: Expand-Archive ngrok.zip
+
+      - name: Configure Ngrok Auth
+        run: |
+          .\ngrok\ngrok.exe authtoken $env:NGROK_AUTH_TOKEN
+        env:
+          NGROK_AUTH_TOKEN: ${{ secrets.NGROK_AUTH_TOKEN }}
+
+      - name: Enable Remote Desktop
+        run: |
+          # Enable Terminal Services
+          Set-ItemProperty -Path 'HKLM:\System\CurrentControlSet\Control\Terminal Server' -Name "fDenyTSConnections" -Value 0
+
+          # Allow Remote Desktop through Windows Firewall
+          Enable-NetFirewallRule -DisplayGroup "Remote Desktop"
+
+          # Enable user authentication for RDP
+          Set-ItemProperty -Path 'HKLM:\System\CurrentControlSet\Control\Terminal Server\WinStations\RDP-Tcp' -Name "UserAuthentication" -Value 1
+
+      - name: Set Local User Password
+        run: |
+          # Set password for the local user "runneradmin"
+          Set-LocalUser -Name "egianda" -Password (ConvertTo-SecureString -AsPlainText "P@ssw0rd!" -Force)
+
+      - name: Create Ngrok Tunnel
+        run: |
+          # Create a tunnel using Ngrok to forward local port 3389
+          .\ngrok\ngrok.exe tcp 3389
